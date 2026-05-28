@@ -224,7 +224,7 @@ export default function RoundsManager({
                 />
               </div>
               <p className="text-xs text-[var(--text-muted)]">
-                This QR expires in 24 hours.
+                This QR expires in 72 hours.
               </p>
               <p className="text-xs text-[var(--text-muted)]">
                 Expires: {new Date(qrInfo.expiresAt).toLocaleString()}

@@ -53,7 +53,7 @@ export default function ScoreScreen({
         rel="noreferrer"
         className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[var(--yellow)] font-semibold text-[var(--text-on-yellow)]"
       >
-        Visit BecomeADoer.com
+        Visit becomeadoer.com
       </a>
     </div>
   );

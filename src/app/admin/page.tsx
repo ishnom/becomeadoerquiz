@@ -201,7 +201,7 @@ export default function AdminPage() {
 
   const handleGenerateQr = async (round: Round) => {
     const now = Date.now();
-    const expiresAt = now + 24 * 60 * 60 * 1000;
+    const expiresAt = now + 72 * 60 * 60 * 1000;
     const url = `${window.location.origin}/quiz/${round.id}`;
     const payload = {
       roundId: round.id,
