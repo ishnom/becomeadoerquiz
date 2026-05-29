@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import type { Round } from "./RoundsManager";
@@ -39,9 +40,32 @@ export default function SubmissionsManager({
   selectedRoundId,
   onSelectRound,
 }: SubmissionsManagerProps) {
+  const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(
+    null
+  );
+
   const filtered = selectedRoundId
     ? submissions.filter((submission) => submission.roundId === selectedRoundId)
     : submissions;
+
+  const attemptBySubmissionId = useMemo(() => {
+    const grouped: Record<string, Submission[]> = {};
+    submissions.forEach((submission) => {
+      const key = `${submission.roundId}::${submission.email.toLowerCase()}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(submission);
+    });
+
+    const attempts: Record<string, number> = {};
+    Object.values(grouped).forEach((group) => {
+      const sorted = [...group].sort((a, b) => a.submittedAt - b.submittedAt);
+      sorted.forEach((submission, index) => {
+        attempts[submission.id] = index + 1;
+      });
+    });
+
+    return attempts;
+  }, [submissions]);
 
   const averageScore = filtered.length
     ? Math.round(
@@ -166,53 +190,111 @@ export default function SubmissionsManager({
                 </td>
               </tr>
             ) : (
-              filtered.map((submission, index) => (
-                <tr
-                  key={submission.id}
-                  className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)]"
-                >
-                  <td className="px-4 py-3">{index + 1}</td>
-                  <td className="px-4 py-3 text-[var(--text-primary)]">
-                    {submission.fullName}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {submission.email}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {submission.roundName}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-primary)]">
-                    {submission.score} / {submission.totalQuestions}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        submission.percentage >= 70
-                          ? "bg-[var(--success)] text-white"
-                          : submission.percentage >= 40
-                            ? "bg-[var(--yellow-soft)] text-[var(--yellow)]"
-                            : "bg-[var(--danger)] text-white"
-                      }`}
-                    >
-                      {submission.percentage}%
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {submission.timeTaken}s
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {new Date(submission.submittedAt).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)]"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))
+              filtered.map((submission, index) => {
+                const correctNumbers = submission.answers
+                  .filter((answer) => answer.isCorrect)
+                  .map((answer) => answer.questionIndex + 1);
+                const attemptNumber = attemptBySubmissionId[submission.id] || 1;
+                const isExpanded = expandedSubmissionId === submission.id;
+
+                return (
+                  <Fragment key={submission.id}>
+                    <tr className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)]">
+                      <td className="px-4 py-3">{index + 1}</td>
+                      <td className="px-4 py-3 text-[var(--text-primary)]">
+                        {submission.fullName}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-muted)]">
+                        {submission.email}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-muted)]">
+                        {submission.roundName}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-primary)]">
+                        {submission.score} / {submission.totalQuestions}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            submission.percentage >= 70
+                              ? "bg-[var(--success)] text-white"
+                              : submission.percentage >= 40
+                                ? "bg-[var(--yellow-soft)] text-[var(--yellow)]"
+                                : "bg-[var(--danger)] text-white"
+                          }`}
+                        >
+                          {submission.percentage}%
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-muted)]">
+                        {submission.timeTaken}s
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-muted)]">
+                        {new Date(submission.submittedAt).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedSubmissionId((prev) =>
+                              prev === submission.id ? null : submission.id
+                            )
+                          }
+                          className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)]"
+                        >
+                          {isExpanded ? "Hide Details" : "View Details"}
+                        </button>
+                      </td>
+                    </tr>
+                    {isExpanded ? (
+                      <tr className="border-t border-[var(--border)] bg-[var(--bg-hover)]">
+                        <td colSpan={9} className="px-4 py-4">
+                          <div className="space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div className="text-sm font-semibold text-[var(--text-primary)]">
+                                Attempt #{attemptNumber}
+                              </div>
+                              <div className="text-sm text-[var(--text-muted)]">
+                                Correct Questions: {correctNumbers.length ? correctNumbers.join(", ") : "None"}
+                              </div>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {submission.answers.map((answer) => (
+                                <div
+                                  key={`${submission.id}-${answer.questionIndex}`}
+                                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3"
+                                >
+                                  <div className="text-xs font-semibold text-[var(--text-muted)]">
+                                    Q{answer.questionIndex + 1}
+                                  </div>
+                                  <div className="mt-1 text-sm text-[var(--text-primary)]">
+                                    {answer.question}
+                                  </div>
+                                  <div className="mt-2 text-xs text-[var(--text-muted)]">
+                                    Selected: {answer.selectedText || "-"}
+                                  </div>
+                                  <div className="text-xs text-[var(--text-muted)]">
+                                    Correct: {answer.correctText}
+                                  </div>
+                                  <div
+                                    className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${
+                                      answer.isCorrect
+                                        ? "bg-[var(--success)] text-white"
+                                        : "bg-[var(--danger)] text-white"
+                                    }`}
+                                  >
+                                    {answer.isCorrect ? "Correct" : "Incorrect"}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })
             )}
           </tbody>
         </table>

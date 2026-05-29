@@ -4,6 +4,8 @@ type ScoreScreenProps = {
   total: number;
   percentage: number;
   timeTaken: number;
+  correctQuestionNumbers: number[];
+  onRedo: () => void;
 };
 
 export default function ScoreScreen({
@@ -12,6 +14,8 @@ export default function ScoreScreen({
   total,
   percentage,
   timeTaken,
+  correctQuestionNumbers,
+  onRedo,
 }: ScoreScreenProps) {
   const percentageColor =
     percentage >= 70
@@ -44,17 +48,36 @@ export default function ScoreScreen({
       <p className="mt-3 text-sm text-[var(--text-muted)]">
         Completed in {timeTaken} seconds
       </p>
+      <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-left">
+        <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">
+          Correct questions
+        </p>
+        <p className="mt-2 text-sm text-[var(--text-primary)]">
+          {correctQuestionNumbers.length
+            ? correctQuestionNumbers.join(", ")
+            : "No correct answers this time."}
+        </p>
+      </div>
       <p className="mt-4 text-sm text-[var(--text-muted)]">
         Your answers have been submitted successfully.
       </p>
-      <a
-        href="https://becomeadoer.com"
-        target="_blank"
-        rel="noreferrer"
-        className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[var(--yellow)] font-semibold text-[var(--text-on-yellow)]"
-      >
-        Visit becomeadoer.com
-      </a>
+      <div className="mt-6 flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={onRedo}
+          className="h-12 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] font-semibold text-[var(--text-primary)]"
+        >
+          Redo Quiz
+        </button>
+        <a
+          href="https://becomeadoer.com"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-[var(--yellow)] font-semibold text-[var(--text-on-yellow)]"
+        >
+          Visit becomeadoer.com
+        </a>
+      </div>
     </div>
   );
 }

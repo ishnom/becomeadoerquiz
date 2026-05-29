@@ -54,6 +54,9 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [percentage, setPercentage] = useState(0);
   const [timeTaken, setTimeTaken] = useState(0);
+  const [correctQuestionNumbers, setCorrectQuestionNumbers] = useState<number[]>(
+    []
+  );
 
   useEffect(() => {
     if (!roundId) return;
@@ -127,7 +130,7 @@ export default function QuizPage() {
     const total = round.questions.length;
     const answerDetails: AnswerDetail[] = round.questions.map(
       (question, index) => {
-        const selected = nextAnswers[index] ?? 0;
+        const selected = nextAnswers[index] ?? -1;
         const selectedText = question.choices[selected] || "";
         const correctText = question.choices[question.answer] || "";
         return {
@@ -164,10 +167,28 @@ export default function QuizPage() {
       });
     }
 
+    const correctNumbers = answerDetails
+      .filter((answer) => answer.isCorrect)
+      .map((answer) => answer.questionIndex + 1);
+
     setScore(finalScore);
     setPercentage(finalPercentage);
     setTimeTaken(seconds);
+    setCorrectQuestionNumbers(correctNumbers);
     setScreen("score");
+  };
+
+  const handleRedo = () => {
+    if (!round) return;
+    setAnswers(Array(round.questions.length).fill(null));
+    setCurrentIndex(0);
+    setSelectedAnswer(null);
+    setScore(0);
+    setPercentage(0);
+    setTimeTaken(0);
+    setCorrectQuestionNumbers([]);
+    setStartTime(Date.now());
+    setScreen("question");
   };
 
   const canSubmitInfo = useMemo(() => {
@@ -238,6 +259,8 @@ export default function QuizPage() {
             total={round.questions.length}
             percentage={percentage}
             timeTaken={timeTaken}
+            correctQuestionNumbers={correctQuestionNumbers}
+            onRedo={handleRedo}
           />
         ) : null}
       </div>
