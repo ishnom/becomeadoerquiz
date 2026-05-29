@@ -27,7 +27,7 @@ export default function ScoreScreen({
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 text-center">
       <h2 className="text-2xl font-semibold text-[var(--text-primary)]">
-        Quiz Complete! 🎉
+        Quiz Complete!
       </h2>
       <p className="mt-2 text-lg font-semibold text-[var(--yellow)]">
         {fullName}
